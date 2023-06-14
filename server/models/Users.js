@@ -31,12 +31,21 @@ module.exports = (sequelize, DataTypes) => {
         key: 'id',
       },
     },
+    roleId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'Roles',
+        key: 'id',
+      },
+    },
   });
 
   Users.associate = (models) => {
     Users.hasMany(models.Tickets, { foreignKey: 'userId' });
     Users.hasMany(models.TicketComments, { foreignKey: 'userId' });
     Users.belongsTo(models.Departments, { foreignKey: 'departmentId' });
+    Users.belongsTo(models.Roles, { foreignKey: 'roleId' });
   };
 
   return Users;

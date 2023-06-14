@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const {
+  Departments,
   Tickets,
   Users,
   TicketCategories,
@@ -8,30 +9,89 @@ const {
   TicketPriorityLevels,
   TicketComments,
 } = require('../models');
-
-// router.get('/', async (req, res) => {
-//   try {
-//     const allTickets = await Tickets.findAll();
-//     res.status(200).json(allTickets);
-//   } catch (error) {
-//     res.status(500).send({ message: 'Internal server error' });
-//   }
-// });
+const { Op } = require('sequelize');
+const moment = require('moment');
 
 // gets all tickets and converts to viewer's timezone
 router.get('/', async (req, res) => {
-  const { status, category } = req.query;
+  const { status, createdToday, closedToday } = req.query;
+  // const { status, createdToday } = filters;
 
   try {
     let tickets;
+    const todayStart = moment().startOf('day').utc().format(); // Start of today in UTC
+    const todayEnd = moment().endOf('day').utc().format(); // End of today in UTC
 
-    if (status && category) {
+    if (status && createdToday && closedToday) {
       tickets = await Tickets.findAll({
+        where: {
+          createdAt: {
+            [Op.between]: [todayStart, todayEnd],
+          },
+          completedAt: {
+            [Op.between]: [todayStart, todayEnd],
+          },
+        },
         order: [['createdAt', 'DESC']],
         include: [
+          { model: Departments },
           { model: Users },
-          { model: TicketCategories, where: { name: category } },
+          { model: TicketCategories },
           { model: TicketStatuses, where: { name: status } },
+          { model: TicketPriorityLevels },
+          { model: TicketComments },
+        ],
+      });
+    } else if (status && createdToday) {
+      tickets = await Tickets.findAll({
+        where: {
+          createdAt: {
+            [Op.between]: [todayStart, todayEnd],
+          },
+        },
+        order: [['createdAt', 'DESC']],
+        include: [
+          { model: Departments },
+          { model: Users },
+          { model: TicketStatuses, where: { name: status } },
+          { model: TicketCategories },
+          { model: TicketPriorityLevels },
+          { model: TicketComments },
+        ],
+      });
+    } else if (status && closedToday) {
+      tickets = await Tickets.findAll({
+        where: {
+          completedAt: {
+            [Op.between]: [todayStart, todayEnd],
+          },
+        },
+        order: [['createdAt', 'DESC']],
+        include: [
+          { model: Departments },
+          { model: Users },
+          { model: TicketStatuses, where: { name: status } },
+          { model: TicketCategories },
+          { model: TicketPriorityLevels },
+          { model: TicketComments },
+        ],
+      });
+    } else if (createdToday && closedToday) {
+      tickets = await Tickets.findAll({
+        where: {
+          createdAt: {
+            [Op.between]: [todayStart, todayEnd],
+          },
+          completedAt: {
+            [Op.between]: [todayStart, todayEnd],
+          },
+        },
+        order: [['createdAt', 'DESC']],
+        include: [
+          { model: Departments },
+          { model: Users },
+          { model: TicketCategories },
+          { model: TicketStatuses },
           { model: TicketPriorityLevels },
           { model: TicketComments },
         ],
@@ -40,6 +100,7 @@ router.get('/', async (req, res) => {
       tickets = await Tickets.findAll({
         order: [['createdAt', 'DESC']],
         include: [
+          { model: Departments },
           { model: Users },
           { model: TicketStatuses, where: { name: status } },
           { model: TicketCategories },
@@ -47,13 +108,36 @@ router.get('/', async (req, res) => {
           { model: TicketComments },
         ],
       });
-    } else if (category) {
+    } else if (closedToday) {
       tickets = await Tickets.findAll({
+        where: {
+          completedAt: {
+            [Op.between]: [todayStart, todayEnd],
+          },
+        },
         order: [['createdAt', 'DESC']],
         include: [
+          { model: Departments },
           { model: Users },
-          { model: TicketCategories, where: { name: category } },
           { model: TicketStatuses },
+          { model: TicketCategories },
+          { model: TicketPriorityLevels },
+          { model: TicketComments },
+        ],
+      });
+    } else if (createdToday) {
+      tickets = await Tickets.findAll({
+        where: {
+          createdAt: {
+            [Op.between]: [todayStart, todayEnd],
+          },
+        },
+        order: [['createdAt', 'DESC']],
+        include: [
+          { model: Departments },
+          { model: Users },
+          { model: TicketStatuses },
+          { model: TicketCategories },
           { model: TicketPriorityLevels },
           { model: TicketComments },
         ],
@@ -62,6 +146,7 @@ router.get('/', async (req, res) => {
       tickets = await Tickets.findAll({
         order: [['createdAt', 'DESC']],
         include: [
+          { model: Departments },
           { model: Users },
           { model: TicketCategories },
           { model: TicketStatuses },
@@ -120,6 +205,62 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// // gets all tickets and converts to viewer's timezone
+// router.get('/', async (req, res) => {
+//   const { status, createdToday, closedToday } = req.query;
+
+//   try {
+//     let tickets;
+//     const todayStart = moment().startOf('day').utc().format(); // Start of today in UTC
+//     const todayEnd = moment().endOf('day').utc().format(); // End of today in UTC
+
+//     const whereCondition = {};
+
+//     if (status && createdToday && closedToday) {
+//       whereCondition['$or'] = [{ '$TicketStatus.name$': status }];
+//       whereCondition['$or'] = [
+//         { createdAt: { [Op.between]: [todayStart, todayEnd] } },
+//       ];
+//       whereCondition['$or'] = [
+//         { completedAt: { [Op.between]: [todayStart, todayEnd] } },
+//       ];
+//     }
+
+//     if (createdToday) {
+//       whereCondition['$or'] = [
+//         { createdAt: { [Op.between]: [todayStart, todayEnd] } },
+//       ];
+//     }
+
+//     if (closedToday) {
+//       whereCondition['$or'] = [
+//         { completedAt: { [Op.between]: [todayStart, todayEnd] } },
+//       ];
+//     }
+
+//     tickets = await Tickets.findAll({
+//       where: whereCondition,
+//       order: [['createdAt', 'DESC']],
+//       include: [
+//         { model: Departments },
+//         { model: Users },
+//         { model: TicketCategories },
+//         { model: TicketStatuses },
+//         { model: TicketPriorityLevels },
+//         { model: TicketComments },
+//       ],
+//     });
+
+//     tickets.forEach((ticket) => {
+//       ticket.createdAt = new Date(ticket.createdAt).toISOString();
+//     });
+
+//     res.status(200).json(tickets);
+//   } catch (error) {
+//     res.status(500).send({ message: error });
+//   }
+// });
+
 router.post('/', async (req, res) => {
   try {
     const ticket = req.body;
@@ -133,7 +274,7 @@ router.post('/', async (req, res) => {
 //updating the ticketStatusId to CLOSED
 router.put('/update/:ticketId', async (req, res) => {
   const ticketId = req.params.ticketId;
-  const desiredTicketStatusId = 2; // Assuming the ticket status ID for 'closed' is 2
+  const desiredTicketStatusId = 3; // Assuming the ticket status ID for 'closed' is 2
 
   try {
     // Find the ticket you want to update

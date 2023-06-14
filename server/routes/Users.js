@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { Users, Departments } = require('../models');
+const { Users, Departments, Roles } = require('../models');
 
 router.get('/', async (req, res) => {
   try {
     const allUsers = await Users.findAll({
-      include: [{ model: Departments }],
+      include: [{ model: Departments }, { model: Roles }],
     });
     res.status(200).json(allUsers);
   } catch (error) {

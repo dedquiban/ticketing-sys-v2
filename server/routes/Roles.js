@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const { TicketPriorityLevels } = require('../models');
+const { Roles } = require('../models');
 
 router.post('/', async (req, res) => {
   try {
-    const ticketPriorityLevel = req.body;
-    await TicketPriorityLevels.create(ticketPriorityLevel);
-    res.status(200).json(ticketPriorityLevel);
+    const role = req.body;
+    await Roles.create(role);
+    res.status(200).json(role);
   } catch (error) {
     res.status(500).send({ message: 'Internal server error' });
   }
@@ -14,8 +14,8 @@ router.post('/', async (req, res) => {
 
 router.get('/', async (req, res) => {
   try {
-    const allTicketPriorityLevels = await TicketPriorityLevels.findAll();
-    res.status(200).json(allTicketPriorityLevels);
+    const allRoles = await Roles.findAll();
+    res.status(200).json(allRoles);
   } catch (error) {
     res.status(500).send({ message: 'Internal server error' });
   }

@@ -31,6 +31,15 @@ app.use('/ticketComments', ticketCommentsRouter);
 const departmentRouter = require('./routes/Departments');
 app.use('/departments', departmentRouter);
 
+const rolesRouter = require('./routes/Roles');
+app.use('/roles', rolesRouter);
+
+const permissionsRouter = require('./routes/Permissions');
+app.use('/permissions', permissionsRouter);
+
+const rolePermissionRouter = require('./routes/RolePermission');
+app.use('/rolePermission', rolePermissionRouter);
+
 db.sequelize.sync().then(() => {
   app.listen(PORT, () => {
     console.log('Server is running on port ' + PORT);
